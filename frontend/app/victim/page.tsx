@@ -1,15 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Disclaimer, Notice, QuickExit, formatTime } from "@/components/ui";
+import { Disclaimer, Notice, QuickExit } from "@/components/ui";
 import { ApiError, authApi, consentApi, publicApi, setSession, victimApi } from "@/lib/api";
-import type { Resource, SelfReportItem, VictimStatus } from "@/lib/types";
+import type { CrisisResource, PortalLanguage, SelfReportItem, VictimView } from "@/lib/types";
 
 type Step =
   | "welcome"
   | "language"
-  | "consent"
   | "channel"
+  | "consent"
   | "compose"
   | "selfreport"
   | "done"
@@ -67,10 +67,11 @@ export default function VictimPortal() {
   const [language, setLanguage] = useState("en");
   const [strings, setStrings] = useState<Strings>(EN_FALLBACK);
   const [stringFallback, setStringFallback] = useState(false);
-  const [languages, setLanguages] = useState<{ code: string; display_name: string; native_name: string }[]>([]);
+  const [languages, setLanguages] = useState<PortalLanguage[]>([]);
   const [consentVersion, setConsentVersion] = useState("v1.0-demo");
   const [disclaimer, setDisclaimer] = useState<string>(EN_FALLBACK.disclaimer);
-  const [helplines, setHelplines] = useState<Resource[]>([]);
+  const [helplines, setHelplines] = useState<CrisisResource[]>([]);
+  const [selfReportItems, setSelfReportItems] = useState<SelfReportItem[]>([]);
   const [channel, setChannel] = useState<"chat" | "voice" | "ivrs">("chat");
 
   const [busy, setBusy] = useState(false);
@@ -83,10 +84,9 @@ export default function VictimPortal() {
   const [draft, setDraft] = useState("");
   const [keypad, setKeypad] = useState("");
   const [selfReport, setSelfReport] = useState<Record<string, number>>({});
-  const [schema, setSchema] = useState<SelfReportItem[]>([]);
 
   const [caseId, setCaseId] = useState<number | null>(null);
-  const [view, setView] = useState<VictimStatus | null>(null);
+  const [view, setView] = useState<VictimView | null>(null);
 
   const startedAt = useRef(Date.now());
   const t = (key: string) => strings[key] ?? EN_FALLBACK[key] ?? key;
@@ -94,21 +94,22 @@ export default function VictimPortal() {
   /* ---------------- bootstrap ---------------- */
 
   useEffect(() => {
+    // One call carries the disclaimer, the helplines, the language list, the
+    // consent version and the self-report questions, so the portal has a
+    // coherent first paint instead of five independently failing ones.
     publicApi
       .config()
       .then((c) => {
         setDisclaimer(c.disclaimer);
-        setHelplines(c.helplines ?? []);
+        setHelplines(c.crisis_resources ?? []);
+        setLanguages(c.languages ?? []);
+        setConsentVersion(c.consent_version);
+        setSelfReportItems(c.self_report_items ?? []);
       })
-      .catch(() => setHelplines([]));
-    publicApi
-      .languages()
-      .then((r) => {
-        setLanguages(r.languages);
-        setConsentVersion(r.consent_version);
-      })
-      .catch(() => setLanguages([]));
-    publicApi.selfReportSchema().then(setSchema).catch(() => setSchema([]));
+      .catch(() => {
+        setHelplines([]);
+        setSelfReportItems([]);
+      });
   }, []);
 
   const loadStrings = useCallback(async (code: string) => {
@@ -161,18 +162,18 @@ export default function VictimPortal() {
 
   /* ---------------- consent ---------------- */
 
-  async function begin() {
+  /**
+   * Registration happens at the consent step, but consent is only *granted*
+   * once the channel is known, because the server scopes consent per channel.
+   * Granting it here with a guessed channel would record consent for a channel
+   * the person never chose.
+   */
+  async function startCase() {
     await guard(async () => {
       // No name is ever requested. A random pseudonym is generated server-side.
       const reg = await authApi.register({ role: "complainant", language_pref: language });
       setSession(reg.access_token, "complainant");
       await consentApi.grant({ version: consentVersion, channel });
-      setStep("channel");
-    });
-  }
-
-  async function startCase() {
-    await guard(async () => {
       const created = await victimApi.createCase({ channel, language });
       setCaseId(created.id);
       setTurns([]);
@@ -222,15 +223,17 @@ export default function VictimPortal() {
   }
 
   async function finish() {
+    // A person may skip the narrative and answer only the questions, so the
+    // self-report alone is the content of this turn. No placeholder text is
+    // invented on their behalf.
     const answers = Object.keys(selfReport).length
       ? selfReport
-      : Object.fromEntries(schema.map((s) => [s.key, s.options[0].value]));
+      : Object.fromEntries(selfReportItems.map((s) => [s.key, s.options[0].value]));
     await guard(async () => {
       if (caseId !== null) {
         const r = await victimApi.submitTurn({
           case_id: caseId,
           channel,
-          text: "",
           response_latency_ms: 4000,
           self_report: answers,
         });
@@ -249,9 +252,9 @@ export default function VictimPortal() {
         <p className="muted">Tele MANAS 14416 &middot; Women Helpline 181 &middot; Police 112 &middot; NHAA 14566</p>
       ) : (
         helplines.map((h) => (
-          <div className="helpline" key={h.key}>
-            <span className="what">{h.label}</span>
-            <span className="num">{h.number}</span>
+          <div className="helpline" key={h.id}>
+            <span className="what">{h.name}</span>
+            <span className="num">{h.numbers.join(" / ")}</span>
           </div>
         ))
       )}
@@ -299,43 +302,15 @@ export default function VictimPortal() {
                 className={`choice${language === l.code ? " selected" : ""}`}
                 onClick={() => {
                   setLanguage(l.code);
-                  setStep("consent");
+                  setStep("channel");
                 }}
               >
                 <strong>{l.native_name}</strong>
-                <span>{l.display_name}</span>
+                <span>{l.label}</span>
               </button>
             ))}
           </div>
           {languages.length === 0 && <p className="muted">English</p>}
-        </div>
-      )}
-
-      {step === "consent" && (
-        <div className="victim-step">
-          <h1>{t("consent.heading")}</h1>
-          <ul style={{ lineHeight: 1.7, paddingLeft: 20 }}>
-            <li>{t("consent.point_record")}</li>
-            <li>{t("consent.point_analyse")}</li>
-            <li>{t("consent.point_share")}</li>
-            <li>{t("consent.point_retention")}</li>
-            <li>{t("consent.point_stop")}</li>
-          </ul>
-          <label style={{ marginTop: 18, fontWeight: 400 }}>
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              style={{ width: "auto", marginRight: 10, display: "inline-block" }}
-            />
-            {t("consent.checkbox")}
-          </label>
-          <div className="row" style={{ marginTop: 18 }}>
-            <button className="primary" disabled={!agreed || busy} onClick={begin}>
-              Continue
-            </button>
-            <button onClick={() => setStep("welcome")}>Back</button>
-          </div>
         </div>
       )}
 
@@ -367,10 +342,38 @@ export default function VictimPortal() {
             </button>
           </div>
           <div className="row" style={{ marginTop: 18 }}>
-            <button className="primary" disabled={busy} onClick={startCase}>
+            <button className="primary" onClick={() => setStep("consent")}>
               Continue
             </button>
             <button onClick={() => setStep("welcome")}>Back</button>
+          </div>
+        </div>
+      )}
+
+      {step === "consent" && (
+        <div className="victim-step">
+          <h1>{t("consent.heading")}</h1>
+          <ul style={{ lineHeight: 1.7, paddingLeft: 20 }}>
+            <li>{t("consent.point_record")}</li>
+            <li>{t("consent.point_analyse")}</li>
+            <li>{t("consent.point_share")}</li>
+            <li>{t("consent.point_retention")}</li>
+            <li>{t("consent.point_stop")}</li>
+          </ul>
+          <label style={{ marginTop: 18, fontWeight: 400 }}>
+            <input
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              style={{ width: "auto", marginRight: 10, display: "inline-block" }}
+            />
+            {t("consent.checkbox")}
+          </label>
+          <div className="row" style={{ marginTop: 18 }}>
+            <button className="primary" disabled={!agreed || busy} onClick={startCase}>
+              Continue
+            </button>
+            <button onClick={() => setStep("channel")}>Back</button>
           </div>
         </div>
       )}
@@ -442,7 +445,7 @@ export default function VictimPortal() {
 
           {view && (
             <p className="muted" style={{ marginTop: 16 }}>
-              {view.message_key === "done.bridge_live" || view.urgency === "urgent"
+              {view.next_step_key === "done.bridge_live" || view.urgency === "immediate"
                 ? "A counsellor is being connected to you now. Stay on this screen if you can."
                 : "Thank you. A counsellor will read this and contact you."}
             </p>
@@ -455,9 +458,9 @@ export default function VictimPortal() {
           <h1>{t("selfreport.heading")}</h1>
           <p className="muted">{t("selfreport.note")}</p>
           <div className="stack" style={{ marginTop: 18 }}>
-            {schema.map((item) => (
+            {selfReportItems.map((item) => (
               <div key={item.key}>
-                <label htmlFor={`sr-${item.key}`}>{t(item.prompt_key)}</label>
+                <label htmlFor={`sr-${item.key}`}>{t(item.i18n_key ?? item.key)}</label>
                 <div className="row">
                   {item.options.map((opt) => (
                     <button
@@ -466,7 +469,7 @@ export default function VictimPortal() {
                       style={{ width: "auto", marginBottom: 0, padding: "10px 14px" }}
                       onClick={() => setSelfReport((p) => ({ ...p, [item.key]: opt.value }))}
                     >
-                      {t(opt.label_key)}
+                      {t(opt.i18n_key)}
                     </button>
                   ))}
                 </div>
@@ -497,11 +500,16 @@ export default function VictimPortal() {
 
           <h2 style={{ marginTop: 24 }}>{t("done.what_next")}</h2>
           <div className="card" style={{ background: "var(--wash)" }}>
-            {view.urgency === "urgent" ? (
+            {view.urgency === "immediate" ? (
               <p style={{ margin: 0 }}>
                 <strong>A counsellor is being connected to you now.</strong> Stay
                 on this screen if you can. If you are in immediate danger, call{" "}
                 <strong>112</strong>.
+              </p>
+            ) : view.urgency === "priority" ? (
+              <p style={{ margin: 0 }}>
+                <strong>This has been marked as a priority.</strong> A counsellor
+                will contact you as soon as they can.
               </p>
             ) : (
               <p style={{ margin: 0 }}>
@@ -509,7 +517,7 @@ export default function VictimPortal() {
               </p>
             )}
             <p className="faint" style={{ margin: "8px 0 0" }}>
-              Last updated {formatTime(view.updated_at)}
+              Reference {view.reference} &middot; {view.stage}
             </p>
           </div>
 
@@ -530,17 +538,21 @@ export default function VictimPortal() {
             {(helplines.length
               ? helplines
               : [
-                  { key: "tele_manas", label: "Tele MANAS", number: "14416" },
-                  { key: "women", label: "Women Helpline", number: "181" },
-                  { key: "police", label: "Police emergency", number: "112" },
-                  { key: "nhaa", label: "NHAA", number: "14566" },
+                  { id: "tele_manas", name: "Tele MANAS", numbers: ["14416", "1800-891-4416"], description: "" },
+                  { id: "women_helpline", name: "Women Helpline", numbers: ["181"], description: "" },
+                  { id: "police", name: "Police emergency", numbers: ["112"], description: "" },
+                  { id: "nhaa", name: "NHAA", numbers: ["14566"], description: "" },
                 ]
             ).map((h) => (
-              <div className="helpline" key={h.key}>
-                <span className="what">{h.label}</span>
-                <a className="num" href={`tel:${h.number}`}>
-                  {h.number}
-                </a>
+              <div className="helpline" key={h.id}>
+                <span className="what">{h.name}</span>
+                <span className="num">
+                  {h.numbers.map((n) => (
+                    <a key={n} href={`tel:${n}`} style={{ marginRight: 8 }}>
+                      {n}
+                    </a>
+                  ))}
+                </span>
               </div>
             ))}
           </div>
