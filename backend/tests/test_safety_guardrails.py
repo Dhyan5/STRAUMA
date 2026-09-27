@@ -73,6 +73,22 @@ def test_status_view_carries_no_scoring_keys(client, complainant, case_id):
     assert "category" not in body
 
 
+def test_the_transcript_endpoint_carries_the_disclaimer(client, complainant, case_id):
+    """This surface used to return a bare list with no notice on it. Every
+    victim-facing response must carry the prototype disclaimer."""
+    from config import DISCLAIMER
+
+    submit(client, complainant["headers"], case_id, CRITICAL_TEXT, 30000)
+    r = client.get(f"/api/cases/{case_id}/interactions", headers=complainant["headers"])
+    assert r.status_code == 200
+    body = r.json()
+    assert DISCLAIMER in body["disclaimer"]
+    assert body["interactions"], "the transcript should contain the turn just submitted"
+    # Still score-free.
+    assert "text_analysis" not in body["interactions"][0]
+    assert "audio_analysis" not in body["interactions"][0]
+
+
 def test_interaction_history_exposes_no_analysis(client, complainant, case_id):
     """The transcript must be renderable without leaking the engine's output."""
     submit(client, complainant["headers"], case_id, CRITICAL_TEXT, 30000)
