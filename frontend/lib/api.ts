@@ -13,19 +13,28 @@
 
 import type {
   ActionCatalogue,
+  ActionResponse,
   Analytics,
   AuditRow,
-  Band,
   ConsentStatus,
+  CrisisResource,
+  CurrentUser,
   EngineStatus,
+  LanguageCatalogue,
   LawCase,
+  LawPolicy,
+  NotificationOutbox,
+  PortalConfig,
   QueueItem,
-  Resource,
   RulesResponse,
   SelfReportItem,
+  Session,
   StaffCaseDetail,
-  VictimCase,
-  VictimStatus,
+  StringBundle,
+  TurnResult,
+  VictimTranscript,
+  VictimView,
+  CaseOut,
 } from "./types";
 
 export const API_BASE = (
@@ -128,27 +137,27 @@ async function request<T>(
 /* ---------------------------------------------------------------- */
 
 export const publicApi = {
-  config: () => request<{ disclaimer: string; helplines: Resource[]; sla_hours: Record<Band, number> }>("/api/portal/config"),
+  config: () => request<PortalConfig>("/api/portal/config"),
   health: () => request<{ status: string; disclaimer: string }>("/api/health"),
-  crisisResources: () => request<{ resources: Resource[]; disclaimer: string }>("/api/crisis-resources"),
-  languages: () => request<{ languages: { code: string; display_name: string; native_name: string }[]; consent_version: string }>("/api/i18n/languages"),
-  strings: (language: string) =>
-    request<{ language: string; requested_language: string; curated: boolean; fallback: boolean; strings: Record<string, string> }>(
-      `/api/i18n/strings?language=${encodeURIComponent(language)}`,
+  /** Keyed by resource id, not a list. */
+  crisisResources: () =>
+    request<{ resources: Record<string, Omit<CrisisResource, "id">>; disclaimer: string; verification_note: string }>(
+      "/api/crisis-resources",
     ),
+  languages: () => request<LanguageCatalogue>("/api/i18n/languages"),
+  strings: (language: string) =>
+    request<StringBundle>(`/api/i18n/strings?language=${encodeURIComponent(language)}`),
   engines: () => request<EngineStatus>("/api/engines/status"),
   selfReportSchema: () => request<SelfReportItem[]>("/api/self-report/schema"),
 };
 
 export const authApi = {
   register: (body: { role: string; language_pref?: string; display_name?: string; district?: string; password?: string }) =>
-    request<{ access_token: string; pseudonym_id: string; role: string; disclaimer: string }>("/api/auth/register", {
-      method: "POST",
-      body,
-    }),
+    request<Session>("/api/auth/register", { method: "POST", body }),
+  /** JSON body with `pseudonym_id`. Not OAuth2 form encoding. */
   login: (body: { pseudonym_id: string; password: string }) =>
-    request<{ access_token: string; pseudonym_id: string; role: string }>("/api/auth/login", { method: "POST", body }),
-  me: () => request<{ pseudonym_id: string; role: string; district: string | null; disclaimer: string }>("/api/auth/me", { auth: true }),
+    request<Session>("/api/auth/token", { method: "POST", body }),
+  me: () => request<CurrentUser>("/api/auth/me", { auth: true }),
 };
 
 export const consentApi = {
@@ -160,21 +169,34 @@ export const consentApi = {
 
 export const victimApi = {
   createCase: (body: { channel: string; language: string }) =>
-    request<VictimCase>("/api/cases", { method: "POST", body, auth: true }),
-  submitTurn: (body: { case_id: number; channel: string; text?: string; transcribed_text?: string; keypad_presses?: string; response_latency_ms?: number; self_report?: Record<string, number> }) =>
-    request<{ reference: string; view: VictimStatus }>("/api/interactions", { method: "POST", body, auth: true }),
-  demoVoice: (caseId: number, stressed: boolean, transcript: string) =>
-    request<{ reference: string; view: VictimStatus }>(
-      `/api/interactions/demo-voice?case_id=${caseId}&stressed=${stressed}&transcript=${encodeURIComponent(transcript)}`,
-      { method: "POST", auth: true },
-    ),
-  status: (caseId: number) => request<VictimStatus>(`/api/cases/${caseId}/status`, { auth: true }),
-  history: (caseId: number) =>
-    request<{ interactions: { id: number; channel: string; created_at: string; text: string | null }[]; disclaimer: string }>(
-      `/api/cases/${caseId}/interactions`,
-      { auth: true },
-    ),
-  cases: () => request<{ cases: VictimCase[]; disclaimer: string }>("/api/cases", { auth: true }),
+    request<CaseOut>("/api/cases", { method: "POST", body, auth: true }),
+  submitTurn: (body: {
+    case_id: number;
+    channel: string;
+    text?: string;
+    transcribed_text?: string;
+    keypad_presses?: string;
+    response_latency_ms?: number;
+    self_report?: Record<string, number>;
+  }) => request<TurnResult>("/api/interactions", { method: "POST", body, auth: true }),
+  /**
+   * Synthetic practice clip. Sent as form data because the endpoint declares
+   * `Form(...)` parameters; a query string returns 422.
+   */
+  demoVoice: (caseId: number, stressed: boolean, transcript: string, responseLatencyMs = 30000) => {
+    const form = new FormData();
+    form.set("case_id", String(caseId));
+    form.set("channel", "voice");
+    form.set("stressed", String(stressed));
+    form.set("transcript", transcript);
+    form.set("response_latency_ms", String(responseLatencyMs));
+    return request<TurnResult>("/api/interactions/demo-voice", { method: "POST", auth: true, raw: form });
+  },
+  status: (caseId: number) => request<VictimView>(`/api/cases/${caseId}/status`, { auth: true }),
+  history: (caseId: number) => request<VictimTranscript>(`/api/cases/${caseId}/interactions`, { auth: true }),
+  confirmations: (caseId: number) => request<ActionResponse>(`/api/cases/${caseId}/confirmations`, { auth: true }),
+  /** Withdraws the case: the person asked to stop. */
+  stop: (caseId: number) => request<ActionResponse>(`/api/cases/${caseId}/stop`, { method: "POST", auth: true }),
 };
 
 /* ---------------------------------------------------------------- */
@@ -183,26 +205,25 @@ export const victimApi = {
 
 export const staffApi = {
   queue: () => request<QueueItem[]>("/api/counsellor/queue", { auth: true }),
-  caseDetail: (ref: string) => request<StaffCaseDetail>(`/api/counsellor/queue/${ref}`, { auth: true }),
-  act: (ref: string, body: { action: string; note?: string }) =>
-    request<{ recorded: string[]; can_close: boolean; mandatory_before_critical_close: string[]; detail?: string }>(
-      `/api/counsellor/cases/${ref}/actions`,
-      { method: "POST", body, auth: true },
-    ),
-  close: (ref: string) =>
-    request<{ status: string; detail: string }>(`/api/counsellor/cases/${ref}/close`, { method: "POST", auth: true }),
+  /** Takes the numeric `case_id`, not the human-quotable `case_ref`. */
+  caseDetail: (caseId: number) => request<StaffCaseDetail>(`/api/counsellor/queue/${caseId}`, { auth: true }),
+  act: (caseId: number, body: { action: string; note?: string }) =>
+    request<ActionResponse>(`/api/counsellor/cases/${caseId}/actions`, { method: "POST", body, auth: true }),
+  assign: (caseId: number, body: { counsellor_id?: number; note?: string }) =>
+    request<ActionResponse>(`/api/counsellor/cases/${caseId}/assign`, { method: "POST", body, auth: true }),
+  /** Closure. The endpoint is `resolve`; it returns 409 while actions are missing. */
+  close: (caseId: number, note?: string) =>
+    request<ActionResponse>(`/api/counsellor/cases/${caseId}/resolve`, { method: "POST", body: { note }, auth: true }),
   catalogue: () => request<ActionCatalogue>("/api/counsellor/actions/catalogue", { auth: true }),
   analytics: () => request<Analytics>("/api/admin/analytics", { auth: true }),
   audit: () => request<AuditRow[]>("/api/admin/audit", { auth: true }),
   rules: () => request<RulesResponse>("/api/admin/rules", { auth: true }),
-  notifications: () => request<{ notifications: { id: number; kind: string; payload: string; created_at: string }[]; disclaimer: string }>(
-    "/api/admin/notifications",
-    { auth: true },
-  ),
+  notifications: () => request<NotificationOutbox>("/api/admin/notifications", { auth: true }),
 };
 
 export const lawApi = {
   cases: () => request<LawCase[]>("/api/law-enforcement/cases", { auth: true }),
-  policy: () =>
-    request<{ policy: Record<string, unknown>; disclaimer: string }>("/api/law-enforcement/policy", { auth: true }),
+  caseDetail: (caseRef: string) =>
+    request<LawCase>(`/api/law-enforcement/cases/${encodeURIComponent(caseRef)}`, { auth: true }),
+  policy: () => request<LawPolicy>("/api/law-enforcement/policy", { auth: true }),
 };
