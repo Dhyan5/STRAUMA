@@ -2,8 +2,16 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Band, BandBar, Disclaimer, Notice, Refused, TopBar, formatTime } from "@/components/ui";
-import { ApiError, authApi, clearSession, getToken, staffApi } from "@/lib/api";
-import type { ActionCatalogue, Analytics, AuditRow, QueueItem, RulesResponse, StaffCaseDetail } from "@/lib/types";
+import { ApiError, authApi, clearSession, getToken, setSession, staffApi } from "@/lib/api";
+import type {
+  ActionCatalogue,
+  Analytics,
+  AuditRow,
+  CurrentUser,
+  QueueItem,
+  RulesResponse,
+  StaffCaseDetail,
+} from "@/lib/types";
 
 type Tab = "queue" | "analytics" | "audit" | "rules";
 
@@ -12,13 +20,13 @@ export default function StaffConsole() {
   const [ready, setReady] = useState(false);
   const [pid, setPid] = useState("");
   const [password, setPassword] = useState("");
-  const [who, setWho] = useState<{ pseudonym_id: string; role: string; district: string | null } | null>(null);
+  const [who, setWho] = useState<CurrentUser | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("queue");
   const [disclaimer, setDisclaimer] = useState<string | undefined>();
 
-  const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
+  /** The numeric id, because every staff endpoint is keyed on it. */
+  const [selected, setSelected] = useState<number | null>(null);
   const [detail, setDetail] = useState<StaffCaseDetail | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [audit, setAudit] = useState<AuditRow[]>([]);
@@ -27,6 +35,7 @@ export default function StaffConsole() {
   const [error, setError] = useState<string | null>(null);
   const [refusal, setRefusal] = useState<{ title: string; body: string } | null>(null);
   const [note, setNote] = useState("");
+  const [queue, setQueue] = useState<QueueItem[]>([]);
 
   useEffect(() => {
     if (getToken()) {
@@ -47,11 +56,14 @@ export default function StaffConsole() {
   const loadQueue = useCallback(async () => {
     const rows = await staffApi.queue();
     setQueue(rows);
-    if (rows.length && !selected) setSelected(rows[0].case_ref);
-  }, [selected]);
+    setSelected((prev) => {
+      if (prev !== null && rows.some((r) => r.case_id === prev)) return prev;
+      return rows.length ? rows[0].case_id : null;
+    });
+  }, []);
 
-  const loadDetail = useCallback(async (ref: string) => {
-    setDetail(await staffApi.caseDetail(ref));
+  const loadDetail = useCallback(async (caseId: number) => {
+    setDetail(await staffApi.caseDetail(caseId));
   }, []);
 
   const refresh = useCallback(async () => {
@@ -89,21 +101,15 @@ export default function StaffConsole() {
     setLoginError(null);
     try {
       const r = await authApi.login({ pseudonym_id: pid.trim(), password });
-      setSessionToken(r);
+      // sessionStorage only, never localStorage: a token that outlives the tab
+      // is a token left behind on a shared machine.
+      setSession(r.access_token, r.role);
       setToken(r.access_token);
-      const m = await authApi.me();
-      setWho(m);
+      setWho(await authApi.me());
       setPassword("");
     } catch (err) {
       setLoginError(err instanceof ApiError ? String(err.detail ?? err.message) : String(err));
     }
-  }
-
-  function setSessionToken(r: { access_token: string; role: string }) {
-    // sessionStorage only, never localStorage: a token that outlives the tab
-    // is a token left on a shared machine.
-    window.sessionStorage.setItem("nhaa14566.token", r.access_token);
-    window.sessionStorage.setItem("nhaa14566.role", r.role);
   }
 
   function logout() {
@@ -135,10 +141,11 @@ export default function StaffConsole() {
   }
 
   async function closeCase() {
-    if (!selected) return;
+    if (selected === null) return;
     setRefusal(null);
     try {
-      await staffApi.close(selected);
+      await staffApi.close(selected, note.trim() || undefined);
+      setNote("");
       await loadDetail(selected);
       await loadQueue();
     } catch (e) {
@@ -154,8 +161,8 @@ export default function StaffConsole() {
   async function openTab(next: Tab) {
     setTab(next);
     try {
-      if (next === "analytics" && isAdmin) setAnalytics(await staffApi.analytics());
-      if (next === "audit" && isAdmin) setAudit(await staffApi.audit());
+      if (next === "analytics") setAnalytics(await staffApi.analytics());
+      if (next === "audit") setAudit(await staffApi.audit());
       if (next === "rules") setRules(await staffApi.rules());
     } catch (e) {
       setError(e instanceof ApiError ? String(e.detail ?? e.message) : String(e));
@@ -229,12 +236,13 @@ export default function StaffConsole() {
 
   /* ---------------- console ---------------- */
 
-  const recorded = new Set((detail?.recorded_actions ?? []).map((a) => a.action));
-  const mandatory = detail?.mandatory_before_critical_close ?? [];
+  const recorded = new Set((detail?.actions ?? []).map((a) => a.action));
+  // The gate's requirement list lives on the catalogue, not on the case, so it
+  // is identical for every case and always matches what the server enforces.
+  const mandatory = catalogue?.mandatory_before_critical_close ?? [];
   const missing = mandatory.filter((a) => !recorded.has(a));
-  const allowed = (catalogue?.actions ?? []).filter((a) =>
-    who ? a.allowed.includes(who.role) : false,
-  );
+  const label = (action: string) => catalogue?.actions.find((x) => x.action === action)?.label ?? action;
+  const allowed = (catalogue?.actions ?? []).filter((a) => a.allowed && (!who || a.allowed_roles.includes(who.role)));
 
   return (
     <>
@@ -251,7 +259,7 @@ export default function StaffConsole() {
 
         <div className="toolbar">
           {(["queue", "analytics", "audit", "rules"] as Tab[])
-            .filter((t) => t !== "analytics" && t !== "audit" ? true : isAdmin)
+            .filter((t) => (t === "queue" ? true : isAdmin))
             .map((t) => (
               <button
                 key={t}
@@ -296,12 +304,12 @@ export default function StaffConsole() {
                   <tbody>
                     {queue.map((item) => (
                       <tr
-                        key={item.case_ref}
-                        className={selected === item.case_ref ? "selected" : ""}
+                        key={item.case_id}
+                        className={selected === item.case_id ? "selected" : ""}
                         onClick={() => {
-                          setSelected(item.case_ref);
+                          setSelected(item.case_id);
                           setRefusal(null);
-                          void loadDetail(item.case_ref);
+                          void loadDetail(item.case_id);
                         }}
                         style={{ cursor: "pointer" }}
                       >
@@ -332,10 +340,10 @@ export default function StaffConsole() {
                   <div className="card">
                     <div className="row" style={{ justifyContent: "space-between" }}>
                       <div>
-                        <h2 className="mono">{detail.case_ref}</h2>
+                        <h2 className="mono">{detail.case.ref}</h2>
                         <p className="faint" style={{ margin: 0 }}>
-                          {detail.district} &middot; {detail.language} &middot;{" "}
-                          {detail.channel} &middot; opened {formatTime(detail.created_at)}
+                          {detail.case.district ?? "unspecified district"} &middot; {detail.case.language} &middot;{" "}
+                          {detail.case.channel} &middot; opened {formatTime(detail.case.created_at)}
                         </p>
                       </div>
                       <div style={{ textAlign: "right" }}>
@@ -356,7 +364,7 @@ export default function StaffConsole() {
                     )}
 
                     <h3>How the number was reached</h3>
-                    <div className="weights" title="Text / vocal / behavioural contribution">
+                    <div className="weights" title="Component contribution">
                       {Object.entries(detail.svi.weights).map(([k, v]) => (
                         <i key={k} className={k} style={{ width: `${v * 100}%` }} />
                       ))}
@@ -374,7 +382,9 @@ export default function StaffConsole() {
                       <div>
                         <div className="faint">Vocal</div>
                         <div className="mono">
-                          {detail.svi.vocal_score === null ? "no voice turn" : detail.svi.vocal_score.toFixed(1)}
+                          {detail.svi.weights.vocal === undefined
+                            ? "no voice turn"
+                            : detail.svi.vocal_score.toFixed(1)}
                         </div>
                       </div>
                       <div>
@@ -387,7 +397,9 @@ export default function StaffConsole() {
                       </div>
                     </div>
                     <p className="faint" style={{ marginTop: 10 }}>
-                      {detail.disclosure}
+                      {detail.sla_label}
+                      {detail.exposes_to_law_enforcement &&
+                        " · visible to law enforcement because a human recorded a police liaison"}
                     </p>
                   </div>
 
@@ -403,7 +415,7 @@ export default function StaffConsole() {
                         {mandatory.map((a) => (
                           <li key={a} className={missing.includes(a) ? "todo" : "done"}>
                             {missing.includes(a) ? "Not yet: " : "Done: "}
-                            {catalogue?.actions.find((x) => x.key === a)?.label ?? a}
+                            {label(a)}
                           </li>
                         ))}
                         <li className={canSignOff ? "todo" : "done"}>
@@ -442,7 +454,7 @@ export default function StaffConsole() {
                     />
                     <div className="row">
                       {allowed.map((a) => (
-                        <button key={a.key} onClick={() => act(a.key)} title={a.note}>
+                        <button key={a.action} onClick={() => act(a.action)}>
                           {a.label}
                         </button>
                       ))}
@@ -459,14 +471,14 @@ export default function StaffConsole() {
 
                   <div className="card">
                     <h2>Action ledger</h2>
-                    {detail.recorded_actions.length === 0 ? (
+                    {detail.actions.length === 0 ? (
                       <p className="muted">Nothing recorded yet.</p>
                     ) : (
                       <ul className="ledger">
-                        {detail.recorded_actions.map((a, i) => (
-                          <li key={i}>
+                        {detail.actions.map((a) => (
+                          <li key={a.id}>
                             <span>
-                              {catalogue?.actions.find((x) => x.key === a.action)?.label ?? a.action}
+                              {label(a.action)}
                               {a.note && <div className="faint">{a.note}</div>}
                             </span>
                             <span className="faint">
@@ -488,25 +500,39 @@ export default function StaffConsole() {
                           {turn.response_latency_ms ? `${turn.response_latency_ms}ms` : ""}{" "}
                           {turn.keypad_presses ? `keys ${turn.keypad_presses}` : ""}
                         </div>
-                        {turn.text && <div className="said">{turn.text}</div>}
+                        {(turn.raw_text || turn.transcribed_text) && (
+                          <div className="said">{turn.raw_text || turn.transcribed_text}</div>
+                        )}
+                        {turn.self_report && Object.keys(turn.self_report).length > 0 && (
+                          <div className="faint">
+                            self-report {JSON.stringify(turn.self_report)}
+                          </div>
+                        )}
                         {turn.text_analysis && (
                           <>
                             <div>
                               <span className="faint">text risk </span>
                               <span className="mono">{turn.text_analysis.text_risk_score.toFixed(1)}</span>
-                              <span className="faint"> &middot; lexicon {turn.text_analysis.lexicon_version}</span>
+                              <span className="faint">
+                                {" "}
+                                &middot; sentiment {turn.text_analysis.sentiment} (
+                                {turn.text_analysis.sentiment_score.toFixed(2)}) &middot; lexicon{" "}
+                                {turn.text_analysis.lexicon_version}
+                              </span>
                             </div>
-                            <div style={{ marginTop: 6 }}>
-                              {turn.text_analysis.flag_details.map((f) => (
-                                <span
-                                  key={f.flag}
-                                  className={`flag${f.tier === "critical" ? " critical" : ""}`}
-                                  title={f.label}
-                                >
-                                  {f.flag} &middot; {f.tier}
-                                </span>
-                              ))}
-                            </div>
+                            {turn.text_analysis.risk_flags.length > 0 && (
+                              <div style={{ marginTop: 6 }}>
+                                {turn.text_analysis.risk_flags.map((f) => (
+                                  <span
+                                    key={f}
+                                    className={`flag${detail.is_critical_override && f === "self_harm_ideation" ? " critical" : ""}`}
+                                    title={`lexicon flag raised by ${turn.text_analysis?.method} (${turn.text_analysis?.lexicon_version})`}
+                                  >
+                                    {f}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </>
                         )}
                         {turn.audio_analysis && (
@@ -541,7 +567,7 @@ export default function StaffConsole() {
             <div className="grid2">
               <div>
                 <h3>By channel</h3>
-                {Object.entries(analytics.by_channel).map(([k, v]) => (
+                {Object.entries(analytics.cases_by_channel).map(([k, v]) => (
                   <p key={k} className="mono">
                     {k}: {v}
                   </p>
@@ -549,7 +575,7 @@ export default function StaffConsole() {
               </div>
               <div>
                 <h3>By language</h3>
-                {Object.entries(analytics.by_language).map(([k, v]) => (
+                {Object.entries(analytics.cases_by_language).map(([k, v]) => (
                   <p key={k} className="mono">
                     {k}: {v}
                   </p>
@@ -613,7 +639,7 @@ export default function StaffConsole() {
             </pre>
             <h3>Bands</h3>
             <pre className="mono" style={{ background: "var(--wash)", padding: 12, borderRadius: 8, overflow: "auto" }}>
-              {JSON.stringify(rules.bands, null, 2)}
+              {JSON.stringify(rules.svi_bands, null, 2)}
             </pre>
             <h3>Critical override reasons</h3>
             {Object.entries(rules.override_reasons).map(([k, v]) => (
