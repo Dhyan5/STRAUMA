@@ -1,0 +1,228 @@
+{
+  "language": "en",
+  "display_name": "English",
+  "native_name": "English",
+  "version": "2026-01-lexicon-v1",
+  "curation_status": "PROTOTYPE",
+  "review_note": "Hand-authored for the hackathon prototype. A qualified mental-health professional MUST review and sign off on every pattern here before any real-world deployment. Mistranslating a suicide-risk phrase is a safety bug, so these files are never machine-generated or machine-translated at runtime.",
+  "scope_note": "Patterns match distress INDICATORS in lay language. They deliberately contain no descriptions of violence, abuse, or self-harm methods.",
+  "flags": {
+    "self_harm_ideation": {
+      "tier": "critical",
+      "weight": 92,
+      "label": "Statements suggesting thoughts of not wanting to be alive",
+      "patterns": [
+        "\\bkill(?:ing)?\\s+my\\s?self\\b",
+        "\\bend(?:ing)?\\s+(?:my|it)\\s+(?:life|all)\\b",
+        "\\bdon'?t\\s+want\\s+to\\s+(?:be\\s+alive|live|go\\s+on)\\b",
+        "\\bdo\\s+not\\s+want\\s+to\\s+(?:be\\s+alive|live|go\\s+on)\\b",
+        "\\bno\\s+reason\\s+to\\s+live\\b",
+        "\\bnothing\\s+to\\s+live\\s+for\\b",
+        "\\bsuicid(?:e|al)\\b",
+        "\\btake\\s+my\\s+own\\s+life\\b",
+        "\\bbetter\\s+off\\s+(?:dead|without\\s+me)\\b",
+        "\\bwish(?:ing)?\\s+i\\s+(?:was|were)\\s+dead\\b",
+        "\\bcan'?t\\s+go\\s+on\\s+anymore\\b",
+        "\\bgive\\s+up\\s+on\\s+(?:everything|life)\\b"
+      ]
+    },
+    "immediate_danger": {
+      "tier": "critical",
+      "weight": 95,
+      "label": "Immediate or ongoing danger to the person reporting",
+      "patterns": [
+        "\\b(?:right\\s+now|right\\s+away|tonight|now)\\b[^.!?]{0,40}\\b(?:kill|hurt|attack|find)\\s*me\\b",
+        "\\bhe\\s+(?:is|are)\\s+(?:here|outside)\\s+now\\b",
+        "\\b(?:he|she|they)\\s+has\\s+a\\s+weapon\\b",
+        "\\b(?:i(?:'m| am)|we(?:'re| are))\\s+in\\s+danger\\s+(?:right\\s+now|now)\\b",
+        "\\bplease\\s+help\\s+me\\s+(?:right\\s+now|quickly|fast)\\b",
+        "\\b(?:i\\s+can'?t|can'?t)\\s+get\\s+out\\b",
+        "\\bhe'?s\\s+locking\\s+me\\s+(?:in|up)\\b",
+        "\\bi\\s+am\\s+trapped\\b"
+      ]
+    },
+    "ongoing_violence": {
+      "tier": "critical",
+      "weight": 78,
+      "label": "Reports of harm happening now or repeatedly",
+      "patterns": [
+        "\\b(?:he|she|they)\\s+(?:keeps?|kept|is|are)\\s+(?:hitting|beating|attacking)\\b",
+        "\\b(?:he|she|they)\\s+(?:has|have)\\s+(?:hit|beaten)\\s+me\\b",
+        "\\bi\\s+(?:am|'m|was|were)\\s+(?:hit|beaten|hurt|injured)\\b",
+        "\\b(?:physical|domestic)\\s+violence\\b",
+        "\\b(?:took|taking|takes)\\s+my\\s+(?:money|phone|documents)\\s+by\\s+force\\b",
+        "\\b(?:burn|tore)\\s+my\\s+(?:clothes|belongings)\\b",
+        "\\b(?:struck|hit)\\s+me\\s+(?:again|today|yesterday)\\b"
+      ]
+    },
+    "threat_language": {
+      "tier": "high",
+      "weight": 58,
+      "label": "Threats, intimidation or fear of retaliation",
+      "patterns": [
+        "\\b(?:he|she|they)\\s+(?:threatens?|threatened|warned|warns)\\b",
+        "\\b(?:threat|threats|threatening)\\b",
+        "\\bhe\\s+will\\s+(?:get|come\\s+after|take)\\s+me\\b",
+        "\\bshe\\s+said\\s+(?:she|he)\\s+would\\s+(?:hurt|kill|harm)\\s+me\\b",
+        "\\b(?:afraid|scared|fearful)\\s+(?:for\\s+my\\s+safety|to\\s+go\\s+home|of\\s+him|of\\s+her|of\\s+them)\\b",
+        "\\bintimidat(?:e|ed|ing)\\b",
+        "\\bif\\s+i\\s+tell(?:\\s+anyone)?\\b[^.!?]{0,40}\\b(?:beat|kill|hurt|throw)\\b",
+        "\\bblackmail(?:ed|ing)?\\b"
+      ]
+    },
+    "hopelessness": {
+      "tier": "high",
+      "weight": 52,
+      "label": "Expressions of hopelessness or futility",
+      "patterns": [
+        "\\b(?:no|not)\\s+hop(?:e|es)\\b",
+        "\\bhopeless(?:ness)?\\b",
+        "\\bi\\s+gave\\s+up\\b",
+        "\\bi'?ve\\s+given\\s+up\\b",
+        "\\bnothing\\s+(?:will|can)\\s+change\\b",
+        "\\b(?:everything|it)\\s+is\\s+(?:useless|pointless|hopeless)\\b",
+        "\\bthere\\s+is\\s+no\\s+way\\s+out\\b",
+        "\\bi\\s+don'?t\\s+see\\s+a\\s+way\\s+(?:out|forward)\\b",
+        "\\bno\\s+future\\b",
+        "\\bi\\s+don'?t\\s+care\\s+about\\s+anything\\b"
+      ]
+    },
+    "isolation": {
+      "tier": "high",
+      "weight": 46,
+      "label": "Social isolation, withdrawal or abandonment",
+      "patterns": [
+        "\\b(?:i\\s+am|'m|im)\\s+alone\\b",
+        "\\bno\\s+one\\s+(?:is|to)\\s+(?:there|help|support)\\b",
+        "\\b(?:no\\s+one|nobody)\\s+(?:calls|care|cares|to\\s+call|answers)\\b",
+        "\\beveryone\\s+(?:has\\s+)?(?:left|abandoned|forgotten)\\s+me\\b",
+        "\\b(?:i\\s+haven'?t|i\\s+have\\s+not)\\s+(?:talked|spoken)\\s+to\\s+(?:anyone|anybody)\\b",
+        "\\b(?:i|we)\\s+(?:are|'re)\\s+(?:isolated|alone\\s+in\\s+this)\\b",
+        "\\bi\\s+don'?t\\s+have\\s+anyone\\s+to\\s+(?:talk\\s+to|call)\\b",
+        "\\b(?:family|relatives|neighbours?)\\s+have\\s+stopped\\s+talking\\b"
+      ]
+    },
+    "financial_coercion": {
+      "tier": "moderate",
+      "weight": 34,
+      "label": "Economic abuse, dependency or denial of basic needs",
+      "patterns": [
+        "\\b(?:for|need(?:ing)?)\\s+money\\s+(?:or|else)\\b",
+        "\\b(?:all|everything)\\s+my\\s+money\\b",
+        "\\bno\\s+money\\s+(?:for|to)\\s+eat\\b",
+        "\\b(?:i|we)\\s+work\\s+but\\s+(?:still|but)\\b[^.!?]{0,30}\\bmoney\\b",
+        "\\b(?:he|she|they)\\s+(?:keeps?|kept)\\s+my\\s+money\\b",
+        "\\b(?:no|not)\\s+enough\\s+(?:to\\s+)?eat\\b",
+        "\\bcan'?t\\s+afford\\b",
+        "\\bmoney\\s+is\\s+the\\s+only\\s+reason\\b[^.!?]{0,30}\\b(stay|married|home)\\b"
+      ]
+    },
+    "stalking_surveillance": {
+      "tier": "moderate",
+      "weight": 38,
+      "label": "Being followed, monitored or unable to be left alone",
+      "patterns": [
+        "\\b(?:he|she|they)\\s+(?:keeps?|always)\\s+follow(?:s|ing)?\\s+me\\b",
+        "\\b(?:he|she|they)\\s+(?:checks?|cheking|checks?)\\s+my\\s+phone\\b",
+        "\\b(?:he|she|they)\\s+(?:knows?|knowing)\\s+where\\s+i\\s+am\\b",
+        "\\bchange\\s+my\\s+number\\b",
+        "\\b(?:he|she|they)\\s+won'?t\\s+let\\s+me\\s+leave\\b",
+        "\\b(?:new|changed)\\s+number\\s+(?:please|needed)\\b",
+        "\\bwatch(?:es|ing)?\\s+me\\b"
+      ]
+    },
+    "somatic_distress": {
+      "tier": "moderate",
+      "weight": 26,
+      "label": "Physical symptoms commonly reported with acute distress",
+      "patterns": [
+        "\\bcan'?t\\s+breathe\\b",
+        "\\b(?:palpitation|heart\\s+racing|racing\\s+heart)\\b",
+        "\\b(?:dizzy|head\\s+spins|shaky|trembling)\\b",
+        "\\b(?:headache|migraine)\\b",
+        "\\bstomach\\s+(?:pain|aches?|cramps?)\\b",
+        "\\b(?:chest\\s+pain|chest\\s+tight)\\b",
+        "\\bnausea|vomiting\\b",
+        "\\bsweating\\s+a\\s+lot\\b"
+      ]
+    },
+    "sleep_disturbance": {
+      "tier": "low",
+      "weight": 16,
+      "label": "Sleep disruption (non-diagnostic on its own)",
+      "patterns": [
+        "\\bcan'?t\\s+sleep\\b",
+        "\\bno\\s+sleep\\b",
+        "\\b(?:awake|up)\\s+all\\s+night\\b",
+        "\\b(?:sleeplessness|insomnia)\\b",
+        "\\bsleep\\s+has\\s+been\\s+bad\\b"
+      ]
+    },
+    "appetite_change": {
+      "tier": "low",
+      "weight": 14,
+      "label": "Changes in appetite or daily routine",
+      "patterns": [
+        "\\b(?:lost|losing)\\s+(?:my\\s+)?appetite\\b",
+        "\\bnot\\s+eating\\b",
+        "\\beating\\s+(?:a\\s+)?lot\\b",
+        "\\bhaven'?t\\s+slept\\s+properly\\b[^.!?]{0,30}\\beating\\b"
+      ]
+    },
+    "trust_deficit": {
+      "tier": "low",
+      "weight": 18,
+      "label": "Distrust of people or institutions",
+      "patterns": [
+        "\\b(?:can'?t|cannot|don'?t|dont)\\s+trust\\b",
+        "\\bno\\s+one\\s+will\\s+believe\\s+me\\b",
+        "\\b(?:police|court|authority)\\s+(?:won'?t|will\\s+not)\\s+do\\s+anything\\b",
+        "\\b(?:afraid|scared)\\s+to\\s+report\\b",
+        "\\b(?:can'?t|cannot|don'?t)\\s+speak\\s+up\\b"
+      ]
+    },
+    "child_safety_concern": {
+      "tier": "critical",
+      "weight": 60,
+      "label": "Concern expressed about a child's safety",
+      "patterns": [
+        "\\bmy\\s+(?:child|children|kids?|son|daughter|baby)\\b[^.!?]{0,40}\\b(?:unsafe|scared|afraid|hurt|in\\s+danger|taken|missing)\\b",
+        "\\b(?:child|children|kids?)\\s+(?:are|is)\\s+(?:alone|locked|trapped|harmed)\\b",
+        "\\b(?:he|she)\\s+hurts?\\s+(?:the|my)\\s+(?:child|children|kid|son|daughter)\\b",
+        "\\bi\\s+am\\s+worried\\s+about\\s+my\\s+(?:child|children|kid|son|daughter)\\b[^.!?]{0,30}\\b(?:safety|harm)\\b"
+      ]
+    }
+  },
+  "absolutist_terms": [
+    "\\balways\\b",
+    "\\bnever\\b",
+    "\\beverything\\b",
+    "\\bnothing\\b",
+    "\\balways\\s+and\\s+forever\\b",
+    "\\bcompletely\\b",
+    "\\btotally\\b",
+    "\\bno\\s+one\\s+ever\\b",
+    "\\bwithout\\s+exception\\b"
+  ],
+  "negation_cues": [
+    "\\bnot\\b",
+    "\\bno\\b",
+    "\\bnever\\b",
+    "\\bnothing\\b",
+    "\\bnobody\\b",
+    "\\bneither\\b",
+    "\\bcan'?t\\b",
+    "\\bwon'?t\\b",
+    "\\bdon'?t\\b",
+    "\\bisn'?t\\b",
+    "\\baren'?t\\b",
+    "\\bwithout\\b"
+  ],
+  "hedge_cues": [
+    "\\b(?:maybe|perhaps|probably|sort\\s+of|kind\\s+of|i\\s+guess|i\\s+think|not\\s+sure)\\b"
+  ],
+  "disfluent_cues": [
+    "\\b(?:um+|uh+|erm+|hmm+|you\\s+know|i\\s+mean)\\b",
+    "\\.{3,}"
+  ]
+}

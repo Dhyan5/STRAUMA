@@ -1,0 +1,75 @@
+{
+  "language": "bn",
+  "display_name": "Bengali",
+  "native_name": "বাংলা",
+  "version": "2026-01-lexicon-v1",
+  "curation_status": "STUB",
+  "review_note": "PARTIAL stub. Written by a non-native speaker for the hackathon demo only. A Bengali-speaking mental-health professional must expand and sign off on this file before any real use. Because coverage is partial, critical-tier detection in this language is marked low-confidence in the UI and never auto-escalates on its own.",
+  "scope_note": "Distress indicators only. No descriptions of violence, abuse, or self-harm methods.",
+  "flags": {
+    "self_harm_ideation": {
+      "tier": "critical",
+      "weight": 92,
+      "label": "বেঁচে থাকতে না চাওয়ার ইঙ্গিত",
+      "patterns": ["মরতে\\s*চাই", "মরতে\\s*চায়", "বেঁচে\\s*থাকতে\\s*চাই\\s*না", "জীবন\\s*চাই\\s*না", "আত্মহত্যা", "সব\\s*ছেড়ে\\s*দেব", "সব\\s*ছেড়ে\\s*দেবো"]
+    },
+    "immediate_danger": {
+      "tier": "critical",
+      "weight": 95,
+      "label": "এখনই চলমান বিপদ",
+      "patterns": ["এখনই\\s*মেরে\\s*ফেলবে", "এখন\\s*বিপদে", "পালাতে\\s*পারছি\\s*না", "এখনই\\s*সাহায্য", "আটকে\\s*আছি"]
+    },
+    "ongoing_violence": {
+      "tier": "critical",
+      "weight": 78,
+      "label": "চলমান বা বারবার ক্ষতি",
+      "patterns": ["মারছে", "মারপিট", "মেরে\\s*ফেলেছে", "আঘাত\\s*করেছে", "প্রহার\\s*করছে", "আমাকে\\s*মারছে"]
+    },
+    "threat_language": {
+      "tier": "high",
+      "weight": 58,
+      "label": "হুমকি বা ভয়",
+      "patterns": ["হুমকি", "হুমকি\\s*দিচ্ছে", "ভয়\\s*দেখাচ্ছে", "ভয়\\s*পেতে", "বদলা\\s*নেবে"]
+    },
+    "hopelessness": {
+      "tier": "high",
+      "weight": 52,
+      "label": "নিরাশা",
+      "patterns": ["আশা\\s*নেই", "উম্মীদ\\s*নেই", "হাল\\s*ছেড়ে\\s*দিয়েছি", "কিছুই\\s*হবে\\s*না", "কোনো\\s*রাস্তা\\s*নেই"]
+    },
+    "isolation": {
+      "tier": "high",
+      "weight": 46,
+      "label": "একাকিত্ব",
+      "patterns": ["একা\\s*আছি", "একা", "কেউ\\s*নেই", "কেউ\\s*ফোন\\s*ধরে\\s*না", "কেউ\\s*বিশ্বাস\\s*করবে\\s*না"]
+    },
+    "somatic_distress": {
+      "tier": "moderate",
+      "weight": 26,
+      "label": "শারীরিক উপসর্গ",
+      "patterns": ["শ্বাস\\s*নিতে\\s*পারি\\s*না", "বুকে\\s*ব্যথা", "মাথাব্যথা", "পেটে\\s*ব্যথা", "বুক\\s*কাঁপছে"]
+    },
+    "sleep_disturbance": {
+      "tier": "low",
+      "weight": 16,
+      "label": "ঘুমের সমস্যা",
+      "patterns": ["ঘুমাতে\\s*পারি\\s*না", "ঘুম\\s*আসে\\s*না", "রাত\\s*জেগে"]
+    },
+    "financial_coercion": {
+      "tier": "moderate",
+      "weight": 34,
+      "label": "আর্থিক চাপ",
+      "patterns": ["টাকার\\s*জন্য", "খাবার\\s*নেই", "আমার\\s*সব\\s*টাকা", "পইসা\\s*নেই"]
+    },
+    "trust_deficit": {
+      "tier": "low",
+      "weight": 18,
+      "label": "অবিশ্বাস",
+      "patterns": ["কারও\\s*বিশ্বাস\\s*নেই", "পুলিশ\\s*কিছু\\s*করবে\\s*না", "চাপলে\\s*বিশ্বাস\\s*করবে\\s*না"]
+    }
+  },
+  "absolutist_terms": ["সবসময়", "কখনও\\s*নয়", "সব\\s*কিছু", "একেবারে", "প্রতিবার"],
+  "negation_cues": ["না", "নেই", "নয়", "কখনও\\s*না", "কেউ\\s*না", "ছাড়া"],
+  "hedge_cues": ["হয়তো", "মনে\\s*হয়", "ভাবছি"],
+  "disfluent_cues": ["মানে", "\\.\\.\\."]
+}

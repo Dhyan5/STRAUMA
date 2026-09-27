@@ -1,0 +1,75 @@
+{
+  "language": "mr",
+  "display_name": "Marathi",
+  "native_name": "मराठी",
+  "version": "2026-01-lexicon-v1",
+  "curation_status": "STUB",
+  "review_note": "PARTIAL stub written for the hackathon demo only. A Marathi-speaking mental-health professional must expand and sign off on this file before any real use. Critical-tier detection in this language is marked low-confidence in the UI and never auto-escalates on its own.",
+  "scope_note": "Distress indicators only. No descriptions of violence, abuse, or self-harm methods.",
+  "flags": {
+    "self_harm_ideation": {
+      "tier": "critical",
+      "weight": 92,
+      "label": "जगण्याची इच्छा नसण्याचे संकेत",
+      "patterns": ["मरायचं\\s*ठरवल", "स्वतःचा\\s*जीवन\\s*घ्यायच", "आत्महत्या", "सगळं\\s*सोडून\\s*द्यायच", "सगळं\\s*सोडतो", "जगायची\\s*इच्छा\\s*नाही", "शेवटचा\\s*निर्णय"]
+    },
+    "immediate_danger": {
+      "tier": "critical",
+      "weight": 95,
+      "label": "सध्या चालू असलेला धोका",
+      "patterns": ["आत्ता\\s*मारेल", "आत्ता\\s*धोका", "पळून\\s*जाऊ\\s*शकत\\s*नाही", "मदत\\s*होईल", "अडकून\\s*आहे"]
+    },
+    "ongoing_violence": {
+      "tier": "critical",
+      "weight": 78,
+      "label": "चालू किंवा वारंवार होणारा अपव्यव",
+      "patterns": ["मारतोय", "मारपीट", "मारलं", "मला\\s*मारत", "अपघात", "मारक्या"]
+    },
+    "threat_language": {
+      "tier": "high",
+      "weight": 58,
+      "label": "धमकी किंवा भीती",
+      "patterns": ["धमकी", "भय\\s*दाखवत", "भय\\s*वाटतं", "उमटावेल", "काही\\s*होईल"]
+    },
+    "hopelessness": {
+      "tier": "high",
+      "weight": 52,
+      "label": "निराशा",
+      "patterns": ["अशी\\s*काही\\s*उमेद\\s*नाही", "उमेद\\s*नाही", "हार\\s*मानली", "काहीच\\s*होणार\\s*नाही", "कुठे\\s*नाही", "मार्ग\\s*दिसत\\s*नाही"]
+    },
+    "isolation": {
+      "tier": "high",
+      "weight": 46,
+      "label": "एकटेपणा",
+      "patterns": ["एकट्यो", "कोणी\\s*नाही", "कोणी\\s*फोन\\s*करत\\s*नाही", "कोणी\\s*मानणार\\s*नाही", "वेगळं\\s*पडतं"]
+    },
+    "financial_coercion": {
+      "tier": "moderate",
+      "weight": 34,
+      "label": "आर्थिक दबाव",
+      "patterns": ["पैसांसाठी", "पैसे\\s*नाहीत", "अन्न\\s*मिळत\\s*नाही", "उत्पन्न\\s*नाही"]
+    },
+    "somatic_distress": {
+      "tier": "moderate",
+      "weight": 26,
+      "label": "शारीरिक तक्रीफ",
+      "patterns": ["श्वास\\s*घेता\\s*येत\\s*नाही", "छातीत\\s*दुखणे", "डोके\\s*दुखणे", "पोट\\s*दुखणे", "हात\\s*कंपत"]
+    },
+    "sleep_disturbance": {
+      "tier": "low",
+      "weight": 16,
+      "label": "झोपेची समस्या",
+      "patterns": ["झोपत\\s*येत\\s*नाही", "झोप\\s*येत\\s*नाही", "रात्र\\s*जागत"]
+    },
+    "trust_deficit": {
+      "tier": "low",
+      "weight": 18,
+      "label": "अविश्वास",
+      "patterns": ["कोणाचा\\s*विश्वास\\s*नाही", "पोलीस\\s*काही\\s*करणार\\s*नाही", "सांगितलं\\s*तरी\\s*कोणी\\s*मानणार\\s*नाही"]
+    }
+  },
+  "absolutist_terms": ["नेहमी", "कधीच\\s*नाही", "सगळं", "पूर्णपणे", "प्रत्येक\\s*वेळी"],
+  "negation_cues": ["नाही", "नको", "कधीच\\s*नाही", "कोणी\\s*नाही", "शिवाय"],
+  "hedge_cues": ["कदाचित", "वाटतं", "मला\\s*वाटतं"],
+  "disfluent_cues": ["म्हणजे", "असले\\s*तर", "\\.\\.\\."]
+}

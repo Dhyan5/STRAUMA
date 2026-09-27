@@ -1,0 +1,13 @@
+# Optional: real multilingual sentiment model.
+#
+# Installing this makes nlp/sentiment.py attempt to load a transformers
+# sequence classifier (default: cardiff/nlm/xlm-ro-base-sentiment-multilingual).
+# Weights are downloaded from the HuggingFace hub on first use; if the download
+# or load fails, the engine falls back to its lexicon heuristic and reports
+# method="heuristic" in every response. Nothing silently pretends to be an ML
+# result.
+#
+#     pip install -r requirements.txt -r requirements-ml.txt
+#
+torch>=2.2
+transformers>=4.38

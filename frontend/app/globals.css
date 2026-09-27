@@ -1,0 +1,413 @@
+/* ------------------------------------------------------------------
+   NHAA 14566 prototype - one stylesheet, no framework.
+
+   Design intent: the victim surface is calm, high-contrast, large-type
+   and unhurried. The staff surface is dense and information-first. The
+   two are visually distinct on purpose - a counsellor should never feel
+   they are looking at the same screen the person in distress saw.
+   ------------------------------------------------------------------ */
+
+:root {
+  --ink: #14181f;
+  --ink-soft: #4a5568;
+  --ink-faint: #7b8794;
+  --line: #d8dee6;
+  --line-soft: #eaedf2;
+  --paper: #ffffff;
+  --wash: #f6f8fa;
+
+  --calm: #1f6f5c;
+  --calm-soft: #e8f3f0;
+  --warm: #8a5a1f;
+  --warm-soft: #fdf3e3;
+  --alert: #9a2c2c;
+  --alert-soft: #fbeceb;
+  --top: #5b1a1a;
+  --top-soft: #f7e9e9;
+
+  --radius: 10px;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
+    "Noto Sans Devanagari", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--wash);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: #14507a; }
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 10px 16px;
+  font-weight: 600;
+}
+button:hover:not(:disabled) { border-color: var(--ink-faint); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+button.primary {
+  background: var(--calm);
+  border-color: var(--calm);
+  color: #fff;
+}
+button.danger { background: var(--alert); border-color: var(--alert); color: #fff; }
+button.ghost { background: transparent; border-color: transparent; color: var(--ink-soft); }
+button.ghost:hover { background: var(--line-soft); }
+
+input, textarea, select {
+  font: inherit;
+  color: var(--ink);
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  width: 100%;
+}
+textarea { min-height: 120px; resize: vertical; line-height: 1.55; }
+input:focus, textarea:focus, select:focus, button:focus-visible {
+  outline: 3px solid #9cc4e8;
+  outline-offset: 1px;
+}
+label { display: block; font-weight: 600; margin-bottom: 6px; }
+
+/* ---------------- layout ---------------- */
+
+.page { max-width: 1120px; margin: 0 auto; padding: 28px 20px 72px; }
+.page.narrow { max-width: 720px; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.topbar .brand { font-weight: 700; letter-spacing: -0.01em; }
+.topbar .brand span { color: var(--ink-faint); font-weight: 500; }
+.topbar nav { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.topbar nav a, .topbar nav button { font-size: 14px; padding: 6px 10px; }
+
+.card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card h2 { margin: 0 0 4px; font-size: 17px; }
+.card h3 { margin: 0 0 8px; font-size: 15px; }
+.card p.hint { margin: 0 0 16px; color: var(--ink-soft); font-size: 14px; }
+
+.row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.row.end { justify-content: flex-end; }
+.stack { display: flex; flex-direction: column; gap: 12px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.muted { color: var(--ink-soft); }
+.faint { color: var(--ink-faint); font-size: 13px; }
+.mono { font-family: var(--mono); font-size: 13px; }
+hr.sep { border: 0; border-top: 1px solid var(--line-soft); margin: 18px 0; }
+
+/* ---------------- disclaimer ---------------- */
+
+/* Required on every surface. Kept visually small so it does not shout,
+   but never hidden, never collapsed, never behind a toggle. */
+.disclaimer {
+  border-left: 3px solid var(--ink-faint);
+  background: var(--wash);
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 1.5;
+  padding: 8px 12px;
+  border-radius: 0 6px 6px 0;
+  margin: 0 0 16px;
+}
+
+/* ---------------- bands ---------------- */
+
+.band {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid;
+}
+.band.Low { color: var(--calm); background: var(--calm-soft); border-color: #bcdfd6; }
+.band.Moderate { color: var(--warm); background: var(--warm-soft); border-color: #ecd6ad; }
+.band.High { color: #8a4b12; background: #fbeee0; border-color: #e8c49b; }
+.band.Critical { color: var(--top); background: var(--top-soft); border-color: #e0b3b3; }
+
+.pill {
+  display: inline-block;
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--line-soft);
+  color: var(--ink-soft);
+}
+.pill.warn { background: var(--alert-soft); color: var(--alert); }
+.pill.ok { background: var(--calm-soft); color: var(--calm); }
+
+/* ---------------- victim portal ---------------- */
+
+/* Deliberately roomier type than the staff screens. */
+.victim {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 20px 80px;
+  font-size: 17px;
+  line-height: 1.65;
+}
+.victim h1 { font-size: 26px; line-height: 1.3; margin: 0 0 12px; letter-spacing: -0.01em; }
+.victim h2 { font-size: 19px; margin: 0 0 10px; }
+.victim p { margin: 0 0 14px; }
+.victim .lede { font-size: 18px; color: var(--ink-soft); }
+
+.victim-step {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 26px;
+  margin-bottom: 16px;
+}
+
+.choice {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+}
+.choice.selected { border-color: var(--calm); background: var(--calm-soft); }
+.choice strong { display: block; font-size: 16px; margin-bottom: 2px; }
+.choice span { color: var(--ink-soft); font-size: 14px; }
+
+.bubble {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 14px 14px 14px 4px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  max-width: 85%;
+}
+.bubble .when { font-size: 12px; color: var(--ink-faint); margin-top: 4px; }
+
+.reference-box {
+  font-family: var(--mono);
+  font-size: 26px;
+  letter-spacing: 0.08em;
+  background: var(--wash);
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  margin: 16px 0;
+}
+
+.helpline {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.helpline:last-child { border-bottom: 0; }
+.helpline .num { font-family: var(--mono); font-size: 19px; font-weight: 700; white-space: nowrap; }
+.helpline .what { font-size: 15px; }
+
+/* Quick exit replaces the whole document. No animation, no delay, no
+   confirmation step - a frightened person should not have to be sure. */
+.quick-exit {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 50;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: var(--paper);
+}
+.exited {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #6b7280;
+  font-size: 15px;
+  text-align: center;
+  padding: 40px;
+}
+.exited p { max-width: 460px; line-height: 1.7; }
+
+/* ---------------- staff console ---------------- */
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+table.data { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.data th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  border-bottom: 1px solid var(--line);
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+table.data td { padding: 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+table.data tr:hover td { background: var(--wash); }
+table.data tr.selected td { background: var(--calm-soft); }
+table.data td.num { font-family: var(--mono); text-align: right; }
+
+.score-big { font-family: var(--mono); font-size: 34px; font-weight: 700; line-height: 1; }
+.weights { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--line-soft); }
+.weights i { display: block; height: 100%; }
+.weights i.text { background: #4a7fb5; }
+.weights i.vocal { background: #7a5ea8; }
+.weights i.behavioral { background: #3f8f74; }
+
+.turn {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+  background: var(--wash);
+}
+.turn .said {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  line-height: 1.55;
+}
+.flag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  margin: 0 4px 4px 0;
+  font-family: var(--mono);
+}
+.flag.critical { border-color: #d9a5a5; background: var(--top-soft); color: var(--top); font-weight: 600; }
+
+.notice {
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  line-height: 1.55;
+  border: 1px solid;
+}
+.notice.error { background: var(--alert-soft); border-color: #e6bfbd; color: var(--top); }
+.notice.ok { background: var(--calm-soft); border-color: #bcdfd6; color: #14503f; }
+.notice.warn { background: var(--warm-soft); border-color: #ecd6ad; color: #6b4415; }
+.notice.info { background: var(--wash); border-color: var(--line); color: var(--ink-soft); }
+
+.gate {
+  border: 2px solid #d9a5a5;
+  background: var(--top-soft);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.gate h3 { margin: 0 0 8px; color: var(--top); }
+.gate ul { margin: 8px 0 0; padding-left: 20px; }
+.gate li { margin-bottom: 4px; }
+.gate li.done { color: var(--calm); font-weight: 600; }
+.gate li.todo { color: var(--top); }
+
+.ledger { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.ledger li { padding: 7px 0; border-bottom: 1px solid var(--line-soft); display: flex; gap: 10px; justify-content: space-between; }
+
+.stat { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; background: var(--paper); }
+.stat .k { font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-faint); }
+.stat .v { font-size: 26px; font-weight: 700; font-family: var(--mono); margin-top: 4px; }
+
+.bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 14px; }
+.bar-row .label { width: 88px; }
+.bar-row .track { flex: 1; height: 14px; background: var(--line-soft); border-radius: 7px; overflow: hidden; }
+.bar-row .fill { height: 100%; }
+.bar-row .n { width: 34px; text-align: right; font-family: var(--mono); font-size: 13px; }
+
+/* The refusal box. This is the screen a judge should see fail. */
+.refused {
+  border-left: 4px solid var(--alert);
+  background: var(--alert-soft);
+  padding: 14px 16px;
+  border-radius: 0 8px 8px 0;
+  margin: 12px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.refused strong { display: block; color: var(--top); margin-bottom: 4px; }
+
+.grid-landing { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.portal-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.portal-card:hover { border-color: var(--ink-faint); }
+.portal-card h3 { margin: 0 0 6px; }
+.portal-card p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
+.portal-card .tag {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-faint);
+  margin-bottom: 8px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .victim { font-size: 16px; padding: 16px 14px 60px; }
+  .victim h1 { font-size: 22px; }
+  .victim-step { padding: 20px 16px; }
+  .page { padding: 18px 12px 60px; }
+  table.data { font-size: 13px; }
+  table.data th, table.data td { padding: 8px 6px; }
+}

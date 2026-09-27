@@ -1,0 +1,75 @@
+{
+  "language": "te",
+  "display_name": "Telugu",
+  "native_name": "తెలుగు",
+  "version": "2026-01-lexicon-v1",
+  "curation_status": "STUB",
+  "review_note": "PARTIAL stub written for the hackathon demo only. A Telugu-speaking mental-health professional must expand and sign off on this file before any real use. Critical-tier detection in this language is marked low-confidence in the UI and never auto-escalates on its own.",
+  "scope_note": "Distress indicators only. No descriptions of violence, abuse, or self-harm methods.",
+  "flags": {
+    "self_harm_ideation": {
+      "tier": "critical",
+      "weight": 92,
+      "label": "బ్రతకాలను కోరుకోకపోవడానికి సంకేతాలు",
+      "patterns": ["చనిపించాలని", "ఆత్మహత్య", "బ్రతకాలను\\s*ఇష్టపడ", "ఇంకా\\s*బ్రతకాల\\s*కావాలి\\s*లేదు", "అంతా\\s*వదిలేస్తాను", "వదిలేస్తాను"]
+    },
+    "immediate_danger": {
+      "tier": "critical",
+      "weight": 95,
+      "label": "ఇప్పుడే జరుగుతున్న ప్రమాదం",
+      "patterns": ["ఇప్పుడే\\s*కొడుతున్నాడు", "ఇప్పుడు\\s*ప్రమాదం", "ఇప్పుడు\\s*పరిస్థితి\\s*కష్టం", "పారిపోలేకపోతున్నాను", "సహాయం\\s*కావాలి", "అందులో\\s*అడ్డుకున్నారు"]
+    },
+    "ongoing_violence": {
+      "tier": "critical",
+      "weight": 78,
+      "label": "కొనసాగుతున్న లేదా పలుమార్లు జరిగే హాని",
+      "patterns": ["కొడుతున్నాడు", "కొరక", "కొట్టారు", "నా\\s*మీడ\\s*కొడుతున్నాడు", "కాయపెట్టారు", "గాయం\\s*చేశారు"]
+    },
+    "threat_language": {
+      "tier": "high",
+      "weight": 58,
+      "label": "బెదిరింపు లేదా భయం",
+      "patterns": ["బెదిరింపు", "బెదిరిస్తున్నాడు", "భయపెట్టుతున్నాడు", "భయం\\s*చూపిస్తున్నాడు", "బతిరిపిస్తాడు"]
+    },
+    "hopelessness": {
+      "tier": "high",
+      "weight": 52,
+      "label": "నిరాశ",
+      "patterns": ["ఆశ\\s*లేదు", "నిరాశ\\s*అయ్యాను", "వదిలేస్తాను", "ఏమీ\\s*జరగదు", "మార్గం\\s*లేదు"]
+    },
+    "isolation": {
+      "tier": "high",
+      "weight": 46,
+      "label": "ఒంటరితనం",
+      "patterns": ["ఒంటరిగా", "ఎవరూ\\s*లేరు", "ఎవరూ\\s*ఫోను\\s*తీసుకుంటారు", "ఎవరూ\\s*నమ్మరు", "ఒక్కడితో"]
+    },
+    "financial_coercion": {
+      "tier": "moderate",
+      "weight": 34,
+      "label": "ఆర్థిక ఒత్తిడి",
+      "patterns": ["డబ్బు\\s*కోసం", "డబ్బు\\s*లేదు", "భోజనం\\s*లేదు", "నా\\s*అంది\\s*డబ్బు"]
+    },
+    "somatic_distress": {
+      "tier": "moderate",
+      "weight": 26,
+      "label": "శారీరక లక్షణాలు",
+      "patterns": ["ఊపిరి\\s*పోతోంది", "ఛातిలో\\s*నొప్పి", "తలనొప్పి", "కడుపు\\s*నొప్పి", "వణుకుస్తోంది"]
+    },
+    "sleep_disturbance": {
+      "tier": "low",
+      "weight": 16,
+      "label": "నిద్ర సమస్య",
+      "patterns": ["నిద్రా\\s*రావడం\\s*లేదు", "నిద్ర\\s*పోవడం\\s*లేదు", "రాత్రి\\s*మేల్కే"]
+    },
+    "trust_deficit": {
+      "tier": "low",
+      "weight": 18,
+      "label": "అపనమ్మకం",
+      "patterns": ["ఎవరానైనా\\s*నమ్మకం\\s*లేదు", "పోలీసు\\s*ఏమీ\\s*చేయరు", "చెప్పితే\\s*ఎవరూ\\s*నమ్మరు"]
+    }
+  },
+  "absolutist_terms": ["ఎప్పుడూ", "ఎప్పుడూ\\s*ఇలా", "అన్ని", "పూర్తిగా", "ప్రతి\\s*సారి"],
+  "negation_cues": ["లేదు", "లేవు", "ఎప్పుడూ\\s*లేదు", "ఎవరూ\\s*లేరు", "ఒకటి\\s*తప్ప"],
+  "hedge_cues": ["బహుశా", "అనిపిస్తున్నాను", "నా\\s*భావన"],
+  "disfluent_cues": ["అంటే", "అని\\s*చెప్పగా", "\\.\\.\\."]
+}

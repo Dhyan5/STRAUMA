@@ -1,0 +1,75 @@
+{
+  "language": "ta",
+  "display_name": "Tamil",
+  "native_name": "தமிழ்",
+  "version": "2026-01-lexicon-v1",
+  "curation_status": "STUB",
+  "review_note": "PARTIAL stub written for the hackathon demo only. A Tamil-speaking mental-health professional must expand and sign off on this file before any real use. Critical-tier detection in this language is marked low-confidence in the UI and never auto-escalates on its own.",
+  "scope_note": "Distress indicators only. No descriptions of violence, abuse, or self-harm methods.",
+  "flags": {
+    "self_harm_ideation": {
+      "tier": "critical",
+      "weight": 92,
+      "label": "உயிர் வாழ விரும்பாதத் தொடர்பான குறிப்புகள்",
+      "patterns": ["சாவத[ை்]\\s*சிந்திக்கிறேன்", "சாவது\\s*நினைக்கிறேன்", "உயிர்\\s*வாழ\\s*விரும்பவில்லை", "வாழ\\s*விரும்பவில்லை", "ஆத்ம\\s*ஹ\\s*த்யா", "ஆத்மஹத்யா", "எல்லாவையும்\\s*விட்டுவிடுவேன்", "விட்டுவிடுவேன்"]
+    },
+    "immediate_danger": {
+      "tier": "critical",
+      "weight": 95,
+      "label": "இப்போது நடக்கும் ஆபத்து",
+      "patterns": ["இப்போது\\s*கொல்கிறான்", "இப்போது\\s*கொல்ல", "இப்போது\\s*ஆபத்து", "ஓட\\s*முடியவில்லை", "உதவி\\s*வேண்டும்", "முடக்கப்பட்ட"]
+    },
+    "ongoing_violence": {
+      "tier": "critical",
+      "weight": 78,
+      "label": "தொடர்ந்து அல்லது அடிக்கடி நடக்கும் காயம்",
+      "patterns": ["அடிக்கிறான்", "அடித்து", "மார்த்தடம்", "மார்", "கொடுத்து\\s*காயம்", "காயப்படுத்தினார்"]
+    },
+    "threat_language": {
+      "tier": "high",
+      "weight": 58,
+      "label": "அச்சுறுத்தல் அல்லது பயம்",
+      "patterns": ["அச்சுறுத்தல்", "அச்சுறுத்துகிறான்", "பயம்\\s*காட்டுகிறான்", "பயம்\\s*வாங்குகிறான்", "முன்னெச்சரிக்கை"]
+    },
+    "hopelessness": {
+      "tier": "high",
+      "weight": 52,
+      "label": "நம்பிக்கையற்ற தோர்றம்",
+      "patterns": ["நம்பிக்கை\\s*இல்லை", "எதிர்பார்ப்பு\\s*இல்லை", "விட்டுவிட்டேன்", "ஒன்றும்\\s*நடக்காது", "வழி\\s*காட்டவில்லை"]
+    },
+    "isolation": {
+      "tier": "high",
+      "weight": 46,
+      "label": "தனிமை",
+      "patterns": ["தனியாக", "யாரும்\\s*இல்லை", "யாரும்\\s*அழைக்கவில்லை", "யாரும்\\s*நம்ப\\s*மாட்டார்", "புறித்தவர்கள்"]
+    },
+    "financial_coercion": {
+      "tier": "moderate",
+      "weight": 34,
+      "label": "பொருள் சார்ந்த அழுத்தம்",
+      "patterns": ["பணத்திற்காக", "பணம்\\s*இல்லை", "உணவு\\s*கிடைப்பதில்லை", "என்\\s*அத்தை\\s*பணம்"]
+    },
+    "somatic_distress": {
+      "tier": "moderate",
+      "weight": 26,
+      "label": "உடல் தொடர்பான அறிகுறிகள்",
+      "patterns": ["மூச்சு\\s*தர\\s*முடியவில்லை", "மார்பு\\s*வலி", "தலைவலி", "வயிற்றுப்புண்", "நடுநிலை\\s*திசைத்தல்"]
+    },
+    "sleep_disturbance": {
+      "tier": "low",
+      "weight": 16,
+      "label": "தூக்கத்தில் சிக்கல்",
+      "patterns": ["தூக்க\\s*முடியவில்லை", "தூக்கம்\\s*வரவில்லை", "விழிப்புறன்\\s*இருக்கிறேன்"]
+    },
+    "trust_deficit": {
+      "tier": "low",
+      "weight": 18,
+      "label": "நம்பிக்கையின்மை",
+      "patterns": ["யாரையும்\\s*நம்ப\\s*முடியவில்லை", "காவல்துறை\\s*எதுவும்\\s*செய்வார்கள்", "சொன்னால்\\s*யாரும்\\s*நம்ப\\s*மாட்டார்"]
+    }
+  },
+  "absolutist_terms": ["எப்போதும்", "ஒருபோதும்\\s*இல்லை", "அனைத்தும்", "முற்றிலும்", "ஒவ்வொரு\\s*முறையும்"],
+  "negation_cues": ["இல்லை", "இல்ல", "ஒருபோதும்\\s*இல்லை", "யாரும்\\s*இல்லை", "இன்றி"],
+  "hedge_cues": ["இருக்கலாம்", "எனக்கு\\s*தெரியும்", "நினைக்கிறேன்"],
+  "disfluent_cues": ["அதாவது", "என்று\\s*சொல்ல", "\\.\\.\\."]
+}

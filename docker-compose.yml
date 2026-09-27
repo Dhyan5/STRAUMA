@@ -1,0 +1,81 @@
+version: "3.9"
+
+# NOTE ON DATA LOCALIZATION
+# A real deployment of this system must run on a MeitY-empanelled /
+# government-approved cloud region inside India (DPDP Act 2023 + IT Act
+# requirements for sensitive personal data). The compose file below is for
+# local demonstration only.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: nhaa-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nhaa}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nhaa}
+      POSTGRES_DB: ${POSTGRES_DB:-nhaa}
+    volumes:
+      - nhaa_pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nhaa}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: nhaa-redis
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: nhaa-backend
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-nhaa}:${POSTGRES_PASSWORD:-nhaa}@db:5432/${POSTGRES_DB:-nhaa}
+      REDIS_URL: redis://redis:6379/0
+      SENTIMENT_BACKEND: ${SENTIMENT_BACKEND:-auto}
+      AUDIO_BACKEND: ${AUDIO_BACKEND:-auto}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - nhaa_audio:/app/uploads/audio
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # The seed script lives at the module root, not in a package, so it is run
+    # by path. SEED_DEMO=false skips it for a clean database.
+    command: sh -c "if [ \"$${SEED_DEMO:-true}\" = \"true\" ]; then python seed_demo_data.py --reset; fi; exec uvicorn main:app --host 0.0.0.0 --port 8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    container_name: nhaa-frontend
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  nhaa_pgdata:
+  nhaa_audio:
