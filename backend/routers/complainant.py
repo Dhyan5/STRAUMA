@@ -30,6 +30,7 @@ from schemas import (
     CaseCreateRequest,
     CaseOut,
     InteractionCreateRequest,
+    InteractionEchoListOut,
     InteractionEchoOut,
     SelfReportItem,
     VictimCaseView,
@@ -152,12 +153,12 @@ def case_status(
     return VictimCaseView(**view.as_dict())
 
 
-@router.get("/cases/{case_id}/interactions", response_model=List[InteractionEchoOut])
+@router.get("/cases/{case_id}/interactions", response_model=InteractionEchoListOut)
 def list_interactions(
     case_id: int,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> List[Interaction]:
+) -> InteractionEchoListOut:
     """The complainant's own turns, and nothing the engine made of them.
 
     This deliberately returns `InteractionEchoOut` rather than `InteractionOut`.
@@ -166,7 +167,16 @@ def list_interactions(
     the leak structurally impossible rather than merely filtered out.
     """
     _own_case(db, user, case_id)
-    return db.query(Interaction).filter(Interaction.case_id == case_id).order_by(Interaction.created_at).all()
+    turns = (
+        db.query(Interaction)
+        .filter(Interaction.case_id == case_id)
+        .order_by(Interaction.created_at)
+        .all()
+    )
+    return InteractionEchoListOut(
+        interactions=[InteractionEchoOut.model_validate(t) for t in turns],
+        disclaimer=DISCLAIMER,
+    )
 
 
 # --------------------------------------------------------------------------
@@ -250,10 +260,10 @@ def submit_interaction(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Consent is required before any message is analysed",
         )
-    if not (payload.text or payload.transcribed_text or payload.keypad_presses):
+    if not (payload.text or payload.transcribed_text or payload.keypad_presses or payload.self_report):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Provide text, transcribed_text or keypad_presses",
+            detail="Provide text, transcribed_text, keypad_presses or a self-report",
         )
 
     language = payload.language or case.language
