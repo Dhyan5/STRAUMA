@@ -151,6 +151,31 @@ def test_an_empty_message_is_refused(client, complainant, case_id):
     assert r.status_code == 422
 
 
+def test_a_self_report_only_turn_is_accepted(client, complainant, case_id, counsellor):
+    """Someone may skip the narrative and answer only the questions.
+
+    The portal used to send `text: ""` for this step and the server refused it,
+    so the answers were lost at the exact moment the person had volunteered
+    something. A turn with no words but a real self-report is legitimate
+    content; a turn with neither is still refused, which the empty case above
+    continues to guarantee.
+    """
+    r = client.post(
+        "/api/interactions",
+        headers=complainant["headers"],
+        json={"case_id": case_id, "channel": "chat", "self_report": {"safety": 3, "support": 2}},
+    )
+    assert r.status_code == 201, r.text
+    assert "disclaimer" in r.json()["view"]
+
+    stored = client.get(
+        f"/api/counsellor/queue/{case_id}", headers=counsellor["headers"]
+    ).json()
+    turns = [i for i in stored["interactions"] if i.get("self_report")]
+    assert turns, "the self-report should be stored on the interaction"
+    assert turns[-1]["self_report"] == {"safety": 3, "support": 2}
+
+
 # --------------------------------------------------------------------------
 # Determinism
 # --------------------------------------------------------------------------
