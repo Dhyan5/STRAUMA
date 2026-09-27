@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Band, Disclaimer, Notice, TopBar, formatTime } from "@/components/ui";
-import { ApiError, authApi, clearSession, getToken, lawApi } from "@/lib/api";
-import type { LawCase } from "@/lib/types";
+import { ApiError, authApi, clearSession, getToken, lawApi, setSession } from "@/lib/api";
+import type { LawCase, LawPolicy } from "@/lib/types";
 
 /**
  * The most restricted surface in the system.
@@ -22,6 +22,7 @@ export default function LawEnforcement() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [cases, setCases] = useState<LawCase[]>([]);
+  const [policy, setPolicy] = useState<LawPolicy | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [disclaimer, setDisclaimer] = useState<string | undefined>();
 
@@ -29,6 +30,7 @@ export default function LawEnforcement() {
     setError(null);
     try {
       setCases(await lawApi.cases());
+      setPolicy(await lawApi.policy());
     } catch (e) {
       if (e instanceof ApiError && (e.status === 401 || e.status === 403)) {
         clearSession();
@@ -68,8 +70,7 @@ export default function LawEnforcement() {
         );
         return;
       }
-      window.sessionStorage.setItem("nhaa14566.token", r.access_token);
-      window.sessionStorage.setItem("nhaa14566.role", r.role);
+      setSession(r.access_token, r.role);
       setToken(r.access_token);
     } catch (err) {
       setLoginError(err instanceof ApiError ? String(err.detail ?? err.message) : String(err));
@@ -173,13 +174,18 @@ export default function LawEnforcement() {
                 {cases.map((c) => (
                   <tr key={c.case_ref}>
                     <td className="mono">{c.case_ref}</td>
-                    <td>{c.district}</td>
+                    <td>{c.district ?? "unspecified"}</td>
                     <td>
                       <Band value={c.category} />
                     </td>
-                    <td>{c.override_reason}</td>
                     <td>
-                      {c.immediate_action_required ? (
+                      {c.override_reason}
+                      <div className="faint" style={{ marginTop: 4 }}>
+                        {c.immediate_action_required}
+                      </div>
+                    </td>
+                    <td>
+                      {c.category === "Critical" ? (
                         <span className="pill warn">Immediate</span>
                       ) : (
                         <span className="pill">Assessment</span>
@@ -200,21 +206,20 @@ export default function LawEnforcement() {
 
         <div className="card">
           <h2>What you can and cannot do here</h2>
+          <p className="hint">
+            Served by <code className="mono">/api/law-enforcement/policy</code>,
+            so the rules below are the server&rsquo;s rules, not this page&rsquo;s.
+          </p>
           <ul style={{ lineHeight: 1.75 }}>
-            <li>
-              Read the referral reason, the district, and whether an immediate
-              welfare check was requested.
-            </li>
+            <li>{policy?.visibility_rule ?? "Visibility requires an explicit human referral."}</li>
             <li>Contact the person only through the district nodal officer pathway below.</li>
             <li>
-              <strong>Not available:</strong> the complainant&rsquo;s words, their
-              identity, the SVI number, or the component breakdown. None of
-              these are sent to this endpoint.
+              <strong>Not available:</strong>{" "}
+              {(policy?.excluded_fields ?? ["the complainant's words", "identity", "SVI number", "component breakdown"])
+                .join(", ")}
+              . None of these are sent to this endpoint.
             </li>
-            <li>
-              This list cannot be exported. Each read is logged, so repeated
-              access is visible to an administrator.
-            </li>
+            <li>{policy?.audit_note ?? "Every read from this view is audited."}</li>
           </ul>
           <p className="faint">
             Contact via {cases[0]?.contact_via ?? "the district nodal officer"}.
