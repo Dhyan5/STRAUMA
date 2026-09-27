@@ -265,6 +265,19 @@ class InteractionEchoOut(BaseModel):
     transcribed_text: Optional[str] = None
 
 
+class InteractionEchoListOut(BaseModel):
+    """Wrapper for the complainant's transcript.
+
+    The brief requires the prototype disclaimer on every surface, and this is a
+    surface. Returning a bare list made that impossible without bolting the
+    notice onto each element, so the endpoint returns this wrapper instead -
+    consistent with every other victim-facing response.
+    """
+
+    interactions: List[InteractionEchoOut] = Field(default_factory=list)
+    disclaimer: str
+
+
 # --------------------------------------------------------------------------
 # Assessment (staff only)
 # --------------------------------------------------------------------------
