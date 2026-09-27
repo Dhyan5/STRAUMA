@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Disclaimer, Notice, TopBar, formatTime } from "@/components/ui";
 import { publicApi } from "@/lib/api";
-import type { EngineStatus } from "@/lib/types";
+import type { EngineStatus, PortalConfig } from "@/lib/types";
 
 export default function Home() {
-  const [config, setConfig] = useState<{ disclaimer: string; sla_hours: Record<string, number> } | null>(null);
+  const [config, setConfig] = useState<PortalConfig | null>(null);
   const [engines, setEngines] = useState<EngineStatus | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
@@ -100,17 +100,19 @@ export default function Home() {
           </ol>
         </div>
 
-        {config?.sla_hours && (
+        {engines && engines.scoring.bands.length > 0 && (
           <div className="card">
             <h2>Response commitments by band</h2>
             <p className="hint">
-              Shown to staff, and shown to the person only as &ldquo;a
-              counsellor will contact you&rdquo;. Never shown as a score.
+              Read from the running engine&rsquo;s own published band
+              configuration, so this table cannot drift from what the queue
+              actually enforces. Shown to staff, and shown to the person only as
+              &ldquo;a counsellor will contact you&rdquo;. Never shown as a score.
             </p>
             <div className="row">
-              {Object.entries(config.sla_hours).map(([band, hours]) => (
-                <span key={band} className="pill">
-                  {band}: {hours}h
+              {engines.scoring.bands.map((b) => (
+                <span key={b.category} className="pill">
+                  {b.category}: {b.min}&ndash;{b.max} &middot; {b.sla_hours}h
                 </span>
               ))}
             </div>
